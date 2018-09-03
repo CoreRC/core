@@ -1,0 +1,17 @@
+[package]
+name = "coreio-core"
+version = "0.1.0"
+authors = ["Fan Jiang <i@fanjiang.me>"]
+
+build = "build.rs"
+
+[build-dependencies]
+capnpc = "0.9.0"
+
+[dependencies]
+capnp = "0.9.0"
+capnp-rpc = "0.9.0"
+futures = "0.1"
+tokio-core = "0.1"
+tokio-io = "0.1"
+regex = "1"
