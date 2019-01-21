@@ -20,14 +20,15 @@
 // THE SOFTWARE.
 
 extern crate capnp;
-#[macro_use] extern crate capnp_rpc;
+#[macro_use]
+extern crate capnp_rpc;
 extern crate futures;
+extern crate regex;
 extern crate tokio_core;
 extern crate tokio_io;
-extern crate regex;
 
 pub mod pubsub_capnp {
-  include!(concat!(env!("OUT_DIR"), "/schema/pubsub_capnp.rs"));
+    include!(concat!(env!("OUT_DIR"), "/schema/pubsub_capnp.rs"));
 }
 
 pub mod client;
@@ -42,7 +43,7 @@ pub fn main() {
             "client" => return client::main(),
             "server" => return server::main(),
             "registry" => return registry::main(),
-            _ => ()
+            _ => (),
         }
     }
 

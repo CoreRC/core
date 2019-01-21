@@ -140,7 +140,10 @@ impl registry::Server for RegistryImpl {
 
         let mut pub_map = self.publishers.borrow_mut();
 
-        let p_vec = pub_map.publishers.entry(topic.to_string()).or_insert(Vec::new());
+        let p_vec = pub_map
+            .publishers
+            .entry(topic.to_string())
+            .or_insert(Vec::new());
 
         p_vec.push(PublisherHandle {
             id: self.next_id,
@@ -152,13 +155,14 @@ impl registry::Server for RegistryImpl {
                 resource_locator::Url(url) => ResourceLocator::URL(url.unwrap().to_string()),
             },
         });
-        
+
         results.get().set_handle(
             registration::ToClient::new(RegistrationImpl::new(
                 self.next_id,
                 topic.to_string(),
                 self.publishers.clone(),
-            )).into_client::<::capnp_rpc::Server>(),
+            ))
+            .into_client::<::capnp_rpc::Server>(),
         );
 
         self.next_id += 1;
@@ -189,28 +193,29 @@ pub fn main() {
     let registry = registry::ToClient::new(registry_impl).into_client::<::capnp_rpc::Server>();
 
     let handle1 = handle.clone();
-    let done = socket.incoming().for_each(move |(socket, _addr)| {
-        try!(socket.set_nodelay(true));
-        let (reader, writer) = socket.split();
-        let handle = handle1.clone();
+    let done = socket
+        .incoming()
+        .for_each(move |(socket, _addr)| {
+            try!(socket.set_nodelay(true));
+            let (reader, writer) = socket.split();
+            let handle = handle1.clone();
 
-        let network =
-            twoparty::VatNetwork::new(reader, writer,
-                                      rpc_twoparty_capnp::Side::Server, Default::default());
+            let network = twoparty::VatNetwork::new(
+                reader,
+                writer,
+                rpc_twoparty_capnp::Side::Server,
+                Default::default(),
+            );
 
-        let rpc_system = RpcSystem::new(Box::new(network), Some(registry.clone().client));
+            let rpc_system = RpcSystem::new(Box::new(network), Some(registry.clone().client));
 
-        handle.spawn(rpc_system.map_err(|_| ()));
-        Ok(())
-    }).map_err(|e| e.into());
+            handle.spawn(rpc_system.map_err(|_| ()));
+            Ok(())
+        })
+        .map_err(|e| e.into());
 
     let infinite = ::futures::stream::iter_ok::<_, Error>(::std::iter::repeat(()));
     let main_loop = infinite.fold((handle, publishers), move |(handle, publishers), ()| -> Promise<(::tokio_core::reactor::Handle, Rc<RefCell<PublisherMap>>), Error> {
-        {
-            
-            
-        }
-
         let timeout = pry!(::tokio_core::reactor::Timeout::new(::std::time::Duration::from_millis(500), &handle));
         let timeout = timeout.and_then(move |()| Ok((handle, publishers))).map_err(|e| e.into());
         Promise::from_future(timeout)
