@@ -24,14 +24,12 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use capnp_rpc::{rpc_twoparty_capnp, twoparty, RpcSystem};
-use pubsub_capnp::{publisher, registration, registry, resource_locator, subscription};
+use pubsub_capnp::{registration, registry, resource_locator};
 
 use capnp::capability::Promise;
-use capnp::message::TypedReader;
-use capnp::serialize::OwnedSegments;
 use capnp::Error;
 
-use futures::{Future, Stream, MapErr};
+use futures::{Future, Stream};
 
 use tokio_core::reactor;
 use tokio_io::AsyncRead;
@@ -160,7 +158,7 @@ impl registry::Server for RegistryImpl {
                 self.next_id,
                 topic.to_string(),
                 self.publishers.clone(),
-            )).from_server::<::capnp_rpc::Server>(),
+            )).into_client::<::capnp_rpc::Server>(),
         );
 
         self.next_id += 1;
@@ -188,7 +186,7 @@ pub fn main() {
 
     let (registry_impl, publishers) = RegistryImpl::new();
 
-    let registry = registry::ToClient::new(registry_impl).from_server::<::capnp_rpc::Server>();
+    let registry = registry::ToClient::new(registry_impl).into_client::<::capnp_rpc::Server>();
 
     let handle1 = handle.clone();
     let done = socket.incoming().for_each(move |(socket, _addr)| {
